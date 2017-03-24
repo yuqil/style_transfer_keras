@@ -50,16 +50,16 @@ def gram_matrix(activation):
     C = K.shape(activation).eval()[2]
     w = K.shape(activation).eval()[0]
     h = K.shape(activation).eval()[1]
-    shape = (C, w * h)
+    shape = (w * h, C)
     # reshape to (C, H*W)
     activation = K.reshape(activation, shape)
-    return K.dot(activation, K.transpose(activation))
+    return K.dot( K.transpose(activation), activation) / (w*h*C)
 
 
 def get_style_loss(original_gram_matrix, new_gram_matrix):
     shape = K.shape(original_gram_matrix).eval()
     size = shape[0] * shape[1]  # W * H * C
-    return K.sum(K.square(original_gram_matrix - new_gram_matrix))  / float(size)
+    return K.sum(K.square(original_gram_matrix - new_gram_matrix))
 
 # input image
 content = process_image("./image/baby.jpg")
@@ -79,20 +79,19 @@ for layer in model.layers:
     outputs_dict[layer.name] = layer.output
     layer.trainable = False
 
-content_act = outputs_dict['block1_conv2'][0]
-style_act = outputs_dict['block1_conv2'][1]
-transfer_act = outputs_dict['block1_conv2'][2]
+content_act = outputs_dict['block5_conv3'][0]
+style_act = outputs_dict['block5_conv3'][1]
+transfer_act = outputs_dict['block5_conv3'][2]
 
 G = gram_matrix(style_act)
 G2 = gram_matrix(content_act)
 G3 = gram_matrix(transfer_act)
 
-print G.eval().shape
 
-print "style \n"
+print "style"
 print get_style_loss(G, G3).eval()
 print get_style_loss(G2, G3).eval()
 
-print "content \n"
+print "content"
 print get_content_loss(content_act, transfer_act).eval()
 print get_content_loss(transfer_act, style_act).eval()
