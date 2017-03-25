@@ -35,7 +35,7 @@ def get_content_loss(args):
 def gram_matrix(activation):
     shape = K.shape(activation)
     shape = (shape[0] * shape[1], shape[2])
-    # reshape to (C, H*W)
+    # reshape to (H*W, C)
     activation = K.reshape(activation, shape)
     return K.dot(K.transpose(activation), activation) / (shape[0] * shape[1])
 
@@ -143,6 +143,7 @@ model.compile(loss={'content': dummy_loss_function, 'style1': dummy_loss_functio
 for layer in model.layers:
     layer.trainable = False
     print layer.name, layer.output_shape, layer.trainable
+
 c = model([transfer_tensor, content_activation, style_activation1])
 print c[0].eval()
 print c[1].eval()
