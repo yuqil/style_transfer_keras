@@ -11,6 +11,11 @@ import numpy as np
 from keras import backend as K
 from keras.preprocessing.image import load_img, img_to_array
 
+'''
+IMPORTANT: This used Theano as backend and use channel last data format!
+Image is representing as (1, 256, 256, 3)
+'''
+
 
 def process_image(image_path):
     '''
@@ -28,11 +33,11 @@ def get_content_loss(args):
     return K.mean(K.square(new_activation - content_activation))
 
 def gram_matrix(activation):
-    w, h, C = K.shape(activation)
-    shape = (w * h, C)
+    shape = K.shape(activation)
+    shape = (shape[0] * shape[1], shape[2])
     # reshape to (C, H*W)
     activation = K.reshape(activation, shape)
-    return K.dot(K.transpose(activation), activation) / (w * h * C)
+    return K.dot(K.transpose(activation), activation) / (shape[0] * shape[1])
 
 def get_style_loss(args):
     new_activation, style_activation = args[0], args[1]
@@ -70,7 +75,7 @@ def get_loss_model():
     # style_activation5 = Input(shape=(16, 16, 512))
 
     x = Convolution2D(64, 3, 3, activation='relu', name='block1_conv1', border_mode='same')(input)
-    style_loss1 = Lambda(get_content_loss, output_shape=(1,), name='style1')([x, style_activation1])
+    style_loss1 = Lambda(get_style_loss, output_shape=(1,), name='style1')([x, style_activation1])
 
     x = Convolution2D(64, 3, 3, activation='relu', name='block1_conv2', border_mode='same')(x)
 
