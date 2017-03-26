@@ -13,9 +13,11 @@ plt.style.use("ggplot")
 import numpy as np
 from keras import backend as K
 from keras.preprocessing.image import load_img, img_to_array
+import math
 
 WIDTH = 256
 HEIGHT = 256
+TV_WEIGHT = math.pow(10, -6)
 
 
 def process_image(image_path):
@@ -39,6 +41,10 @@ def get_content_loss(original_activation, new_activation):
     # size = shape[0] * shape[1] * shape[2]  # W * H * C
     return K.mean(K.square(original_activation - new_activation))
 
+def get_TV(new_gram_matrix):
+    x_diff = K.square(new_gram_matrix[:, :WIDTH - 1, :HEIGHT - 1, :] - new_gram_matrix[:, 1:, :HEIGHT - 1, :])
+    y_diff = K.square(new_gram_matrix[:, :WIDTH - 1, :HEIGHT - 1, :] - new_gram_matrix[:, :WIDTH - 1, 1:, :])
+    return TV_WEIGHT * K.mean(K.sum(K.pow(x_diff + y_diff, 1.25)))
 
 def gram_matrix(activation):
     C = K.shape(activation).eval()[2]
@@ -95,3 +101,6 @@ print get_style_loss(G2, G3).eval()
 print "content"
 print get_content_loss(content_act, transfer_act).eval()
 print get_content_loss(transfer_act, style_act).eval()
+
+print "total variation"
+print get_TV(transfer_tensor).eval()
