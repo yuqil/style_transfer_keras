@@ -79,9 +79,9 @@ for layer in model.layers:
     layer.trainable = False
 
 
-content_act = outputs_dict['block1_conv1'][0]
-style_act = outputs_dict['block1_conv1'][1]
-transfer_act = outputs_dict['block1_conv1'][2]
+content_act = outputs_dict['block3_conv3'][0]
+style_act = outputs_dict['block3_conv3'][1]
+transfer_act = outputs_dict['block3_conv3'][2]
 
 
 
