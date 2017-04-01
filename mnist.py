@@ -45,7 +45,7 @@ def get_transfer_net():
     c3 = BatchNormalization(axis=1)(c3)
     c3 = Activation('relu')(c3)
 
-    r1 = residual_block(c1)
+    r1 = residual_block(c3)
     r2 = residual_block(r1)
     r3 = residual_block(r2)
     r4 = residual_block(r3)
@@ -61,13 +61,13 @@ def get_transfer_net():
     #c4 = Convolution2D(3, 9, 9, activation='linear', border_mode='same')(d2)
 
     #for MNIST
-    f1 = Flatten()(r1)
-    out = Dense(10, input_shape=(3, ), activation='softmax')(f1)
+    #f1 = Flatten()(r1)
+    #out = Dense(10, input_shape=(3, ), activation='softmax')(f1)
 
     m = Model(x, out)
     return m
 
-
+'''
 model = get_transfer_net()
 model.compile(loss='categorical_crossentropy', optimizer='Adam', metrics=['accuracy'])
 
@@ -94,3 +94,4 @@ model.fit(x_train, y_train, batch_size=128, nb_epoch=100,
 score = model.evaluate(X_test, Y_test, verbose=0)
 print('Test score:', score[0])
 print('Test accuracy;', score[1])
+'''
