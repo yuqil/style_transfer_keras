@@ -81,6 +81,8 @@ def get_vgg_activation(tensor, layer_name):
 def dummy_loss_function(y_true, y_pred):
     return y_pred
 
+def zero_loss_function(y_true, y_pred):
+    return K.variable(np.zeros(1,))
 
 
 def get_loss_model():
@@ -112,7 +114,7 @@ def get_loss_model():
     d2 = Deconvolution2D(32, 3, 3, activation='linear', border_mode='same',
                          subsample=(2, 2), output_shape=(1, 256, 256))(d1)
 
-    c4 = Convolution2D(3, 9, 9, activation='tanh', border_mode='same')(d2)
+    c4 = Convolution2D(3, 9, 9, activation='tanh', name='output', border_mode='same')(d2)
 
     content_activation = Input(shape=(1, 128, 128, 64))
     style_activation1 = Input(shape=(256, 256, 64))
@@ -155,7 +157,7 @@ def get_loss_model():
 
     model = Model(
         [input, content_activation, style_activation1, style_activation2, style_activation3, style_activation4],
-        [content_Loss, style_loss1, style_loss2, style_loss3, style_loss4, total_variation_loss], c4)
+        [content_Loss, style_loss1, style_loss2, style_loss3, style_loss4, total_variation_loss, c4])
     model_layers = {layer.name: layer for layer in model.layers}
     original_vgg = vgg16.VGG16(weights='imagenet', include_top=False)
     original_vgg_layers = {layer.name: layer for layer in original_vgg.layers}
@@ -167,9 +169,6 @@ def get_loss_model():
             model_layers[layer.name].set_weights(original_vgg_layers[layer.name].get_weights())
             model_layers[layer.name].trainable = False
 
-    # make the weight unchanged during training
-    for layer in model.layers:
-        layer.trainable = False
     print "VGG model built successfully!"
     return model
 
@@ -177,10 +176,10 @@ def get_loss_model():
 # input image
 content = process_image("./image/baby.jpg")
 style = process_image('./image/style.jpg')
-transfer = process_image('./image/tranfered.jpg')
+# transfer = process_image('./image/tranfered.jpg')
 content_tensor = K.variable(content)
 style_tensor = K.variable(style)
-transfer_tensor = K.variable(transfer)
+# transfer_tensor = K.variable(transfer)
 
 
 # input of content and style activation
@@ -193,11 +192,11 @@ style_activation4 = get_vgg_activation(style_tensor, style_layers[3])
 # define a model
 model = get_loss_model()
 model.compile(loss={'content': dummy_loss_function, 'style1': dummy_loss_function, 'style2': dummy_loss_function,
-                    'style3': dummy_loss_function, 'style4': dummy_loss_function, 'tv': dummy_loss_function},
+                    'style3': dummy_loss_function, 'style4': dummy_loss_function, 'tv': dummy_loss_function,
+                    'output': zero_loss_function},
               optimizer=keras.optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0))
 
-for layer in model.layers:
-    layer.trainable = False
-    print layer.name, layer.output_shape, layer.trainable
 
-c = model([transfer_tensor, content_activation, style_activation1, style_activation2, style_activation3, style_activation4])
+dummy = np.array([0])
+model.fit([content, content_activation.eval(), style_activation1.eval(), style_activation2.eval(), style_activation3.eval(), style_activation4.eval()],
+          [dummy, dummy, dummy, dummy, dummy, dummy, content])
