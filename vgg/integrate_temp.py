@@ -71,7 +71,8 @@ def get_TV(new_gram_matrix):
     return TV_WEIGHT * K.mean(K.sum(K.pow(x_diff + y_diff, 1.25)))
 
 def get_vgg_activation(tensor, layer_name):
-    model = vgg16.VGG16(input_tensor=tensor, weights='imagenet', include_top=False)
+    input_tensor = Input(tensor=tensor, shape=tensor.shape)
+    model = vgg16.VGG16(input_tensor=input_tensor, input_shape=(256, 256, 3), weights='imagenet', include_top=False)
     outputs_dict = {}
     for layer in model.layers:
         outputs_dict[layer.name] = layer.output
