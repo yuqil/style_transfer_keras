@@ -107,27 +107,26 @@ def save_weights(model, style_name, directory=None):
         full_weights_fn = "style_transfer_full_model_%s.h5" % style_name
 
     model.save_weights(filepath=full_weights_fn, overwrite=True)
-    f = h5py.File(full_weights_fn)
-
-    layer_names = [name for name in f.attrs['layer_names']]
-
-    fastnet_model = model.create_model()
-
-    for i, layer in enumerate(fastnet_model.layers):
-        g = f[layer_names[i]]
-        weights = [g[name] for name in g.attrs['weight_names']]
-        layer.set_weights(weights)
-
-    if directory is not None:
-        weights_fn = directory + "style_transfer_net_%s.h5" % style_name
-    else:
-        weights_fn = "style_transfer_net_%s.h5" % style_name
-
-    fastnet_model.save_weights(weights_fn, overwrite=True)
-
-    f.close()
-    os.remove(full_weights_fn)  # The full weights aren't needed anymore since we only need 1 forward pass
-    # through the fastnet now.
+    # f = h5py.File(full_weights_fn)
+    #
+    # layer_names = [name for name in f.attrs['layer_names']]
+    #
+    #
+    # for i, layer in enumerate(fastnet_model.layers):
+    #     g = f[layer_names[i]]
+    #     weights = [g[name] for name in g.attrs['weight_names']]
+    #     layer.set_weights(weights)
+    #
+    # if directory is not None:
+    #     weights_fn = directory + "style_transfer_net_%s.h5" % style_name
+    # else:
+    #     weights_fn = "style_transfer_net_%s.h5" % style_name
+    #
+    # fastnet_model.save_weights(weights_fn, overwrite=True)
+    #
+    # f.close()
+    # os.remove(full_weights_fn)  # The full weights aren't needed anymore since we only need 1 forward pass
+    # # through the fastnet now.
     print("Saved transfer net weights for style : %s.h5" % style_name)
 
 
