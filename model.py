@@ -102,9 +102,9 @@ def save_weights(model, style_name, directory=None):
         if not os.path.exists(directory):
             os.makedirs(directory)
 
-        full_weights_fn = directory + "style_transfer_full_model_%s.h5" % style_name
+        full_weights_fn = directory + "style_transfer_full_model_single_%s.h5" % style_name
     else:
-        full_weights_fn = "style_transfer_full_model_%s.h5" % style_name
+        full_weights_fn = "style_transfer_full_model_single_%s.h5" % style_name
 
     model.save_weights(filepath=full_weights_fn, overwrite=True)
     # f = h5py.File(full_weights_fn)

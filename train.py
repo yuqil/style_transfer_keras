@@ -11,8 +11,8 @@ from keras.applications import vgg16
 from keras.layers import Input
 
 NUM_EPOCH = 1
-NUM_ITR = 400
-TRAINING_BATCH_SIZE = 4
+NUM_ITR = 4000
+TRAINING_BATCH_SIZE = 1
 WIDTH = 256
 HEIGHT = 256
 TV_WEIGHT = math.pow(10, -6)
@@ -48,15 +48,15 @@ training_model = model.get_loss_model()
 training_model.compile(loss={'content': model.dummy_loss_function, 'style1': model.dummy_loss_function, 'style2': model.dummy_loss_function,
                     'style3': model.dummy_loss_function, 'style4': model.dummy_loss_function, 'tv': model.dummy_loss_function,
                     'output': model.zero_loss_function},
-              optimizer=keras.optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0),
-              loss_weights=[1000, 1, 1, 1, 1, 1, 0])
+              optimizer=keras.optimizers.Adam(lr=1, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0),
+              loss_weights=[1, math.pow(10, -4), math.pow(10, -4), math.pow(10, -4), math.pow(10, -4), 1, 0])
 
 t_total_1 = time.time()
 prev_improvement = -1
 iteration = 0
 interrupted = False
 
-datagen = ImageDataGenerator(rescale=1. / 255)
+datagen = ImageDataGenerator()
 
 for i in range(NUM_EPOCH):
     print("Epoch : %d" % (i + 1))
@@ -66,6 +66,7 @@ for i in range(NUM_EPOCH):
         try:
             t1 = time.time()
 
+            x = vgg16.preprocess_input(x)
             content_tensor = K.variable(x)
             content_activation = model.get_vgg_activation(content_tensor, content_layers[0])
 

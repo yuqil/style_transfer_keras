@@ -201,6 +201,9 @@ model.compile(loss={'content': dummy_loss_function, 'style1': dummy_loss_functio
 
 dummy = np.array([0])
 
+print "Before fit"
 
 model.fit([content, content_activation.eval(), style_activation1.eval(), style_activation2.eval(), style_activation3.eval(), style_activation4.eval()],
           [dummy, dummy, dummy, dummy, dummy, dummy, content])
+
+print "After fit"
