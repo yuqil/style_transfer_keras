@@ -12,6 +12,7 @@ from keras.models import Model
 from keras.models import load_model
 from keras.preprocessing.image import load_img, img_to_array
 import math
+import model
 
 WIDTH = 256
 HEIGHT = 256
@@ -122,22 +123,28 @@ def get_loss_model():
 
     return model
 
-trained_model = load_model('my_model.h5')
+trained_model = model.get_loss_model()
+trained_model.load_weights('./weights/style_transfer_full_model_starry_night.h5')
 model = get_loss_model()
 
 print "trained model"
-for layer in trained_model:
-    print layer.name
+for layer in trained_model.layers:
+    print layer.name, layer.output_shape
 
+print
 print "new model"
 for layer in model.layers:
-    print layer.name
+    print layer.name, layer.output_shape
 
+print ""
+print "start"
 
-model_layers = {layer.name: layer for layer in model.layers}
-# load weight
-for layer in trained_model.layers:
-    if layer.name in model_layers:
-        print layer.name, model_layers[layer.name].output_shape
-        model_layers[layer.name].set_weights(trained_model[layer.name].get_weights())
-        model_layers[layer.name].trainable = False
+trained_model_layers = [layer for layer in trained_model.layers]
+model_layers = [layer for layer in model.layers]
+
+for i in xrange(0, len(model_layers)):
+    new_layer = model_layers[i]
+    old_layer = trained_model_layers[i]
+    print new_layer.name, old_layer.name
+    new_layer.set_weights(old_layer.get_weights())
+
