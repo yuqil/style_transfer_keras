@@ -126,6 +126,7 @@ def get_loss_model():
 
 if len(sys.argv) != 2:
     print "python feedforward.py weight path"
+    sys.exit(1)
 
 
 trained_model = model.get_loss_model()
