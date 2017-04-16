@@ -13,6 +13,7 @@ from keras.models import load_model
 from keras.preprocessing.image import load_img, img_to_array
 import math
 import model
+import sys
 
 WIDTH = 256
 HEIGHT = 256
@@ -123,8 +124,12 @@ def get_loss_model():
 
     return model
 
+if len(sys.argv) != 2:
+    print "python feedforward.py weight path"
+
+
 trained_model = model.get_loss_model()
-trained_model.load_weights('./weights/style_transfer_full_model_starry_night.h5')
+trained_model.load_weights(sys.argv[1])
 model = get_loss_model()
 
 print "trained model"
