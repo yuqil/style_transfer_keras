@@ -169,10 +169,10 @@ for i in xrange(0, len(model_layers)):
     print new_layer.name, old_layer.name
     new_layer.set_weights(old_layer.get_weights())
 
-content = process_image("./image/baby.jpg")
+content = process_image(".vgg/image/subdir/baby.jpg")
 tensor = K.variable(content)
 input_tensor = Input(tensor=tensor, shape=tensor.shape)
-c = model(input=input_tensor)
+c = model(input=input_tensor, input_shape=(256, 256, 3))
 print c
 print c.eval()
 output = deprocess_image(c.eval())
