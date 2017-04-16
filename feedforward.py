@@ -1,5 +1,4 @@
-import keras
-import h5py
+
 import numpy as np
 from keras import backend as K
 from keras.applications import vgg16
@@ -7,11 +6,10 @@ from keras.layers import BatchNormalization, Activation, Deconvolution2D
 from keras.layers import Input
 from keras.layers import merge
 from keras.layers.convolutional import Convolution2D, MaxPooling2D
-from keras.layers.core import Lambda
 from keras.models import Model
-from keras.models import load_model
 from keras.preprocessing.image import load_img, img_to_array
 import math
+from scipy.misc import imsave
 import model
 import sys
 
@@ -29,6 +27,22 @@ def residual_block(x):
     x = BatchNormalization(axis=1)(x)
     m = merge([x, shortcut], mode='sum')
     return m
+
+
+def deprocess_image(x):
+    if K.image_data_format() == 'channels_first':
+        x = x.reshape((3, WIDTH, HEIGHT))
+        x = x.transpose((1, 2, 0))
+    else:
+        x = x.reshape((WIDTH, HEIGHT, 3))
+    # Remove zero-center by mean pixel
+    x[:, :, 0] += 103.939
+    x[:, :, 1] += 116.779
+    x[:, :, 2] += 123.68
+    # 'BGR'->'RGB'
+    x = x[:, :, ::-1]
+    x = np.clip(x, 0, 255).astype('uint8')
+    return x
 
 
 def process_image(image_path):
@@ -88,7 +102,7 @@ def dummy_loss_function(y_true, y_pred):
 def zero_loss_function(y_true, y_pred):
     return K.variable(np.zeros(1,))
 
-def get_loss_model():
+def get_transfer_net():
     input = Input(shape=(WIDTH, HEIGHT, 3))
 
     c1 = Convolution2D(32, 9, 9, activation='linear', border_mode='same')(input)
@@ -124,6 +138,7 @@ def get_loss_model():
 
     return model
 
+
 if len(sys.argv) != 2:
     print "python feedforward.py weight path"
     sys.exit(1)
@@ -131,7 +146,7 @@ if len(sys.argv) != 2:
 
 trained_model = model.get_loss_model()
 trained_model.load_weights(sys.argv[1])
-model = get_loss_model()
+model = get_transfer_net()
 
 print "trained model"
 for layer in trained_model.layers:
@@ -153,4 +168,15 @@ for i in xrange(0, len(model_layers)):
     old_layer = trained_model_layers[i]
     print new_layer.name, old_layer.name
     new_layer.set_weights(old_layer.get_weights())
+
+content = process_image("./image/baby.jpg")
+tensor = K.variable(content)
+input_tensor = Input(tensor=tensor, shape=tensor.shape)
+c = model(input=input_tensor)
+print c
+print c.eval()
+output = deprocess_image(c.eval())
+imsave("feedforward_output", output)
+
+
 
