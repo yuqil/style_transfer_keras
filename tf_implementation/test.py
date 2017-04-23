@@ -17,7 +17,7 @@ FLAGS = None
 CHANNELS = 3
 WIDTH = 256
 HEIGHT = 256
-LEARNING_RATE = 0.001
+LEARNING_RATE = 0.1
 
 CONTENT_LAYER = 'relu2_2'
 STYLE_LAYERS = ('relu1_1', 'relu2_1', 'relu3_1', 'relu4_1', 'relu5_1')
@@ -71,13 +71,14 @@ def fill_feed_dict(data_set, content_placeholder, style_placeholder, iteration, 
 def run_training():
   """Train MNIST for a number of steps."""
   # Get the sets of images for training, validation
-  dataset = data_set(FLAGS.training_dir, FLAGS.style_image_path, FLAGS.test_image_dir, FLAGS.test_image_path)
+  dataset = data_set(FLAGS.training_dir, FLAGS.style_image_path, FLAGS.test_image_dir, FLAGS.test_image_path, FLAGS.batch_size)
 
   with tf.Graph().as_default():
       # get input for calculationi
       content_placeholder, style_placeholder = placeholder_inputs(FLAGS.batch_size)
 
-      transferred_image_result = residualnet.net(content_placeholder/255.0)
+      # transferred_image_result = residualnet.net(content_placeholder/255.0)
+      transferred_image_result = tf.Variable(tf.random_normal(content_placeholder.get_shape()) * 0.256)
 
       # get vgg activation
       transferred_image = vgg_model.preprocess(transferred_image_result)
@@ -123,6 +124,7 @@ def run_training():
           sess.run(train_op, feed_dict=feed_dict)
 
           # save test image
+          image = image[0]
           image = image.reshape((256,256,3))
           img = np.clip(image, 0, 255).astype(np.uint8)
           scipy.misc.imsave('test.jpg', img)

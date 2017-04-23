@@ -2,14 +2,17 @@ import glob
 import cv2
 import numpy as np
 class data_set:
-    def __init__(self, training_path, style_image_path, test_image_dir, test_image_path):
+    def __init__(self, training_path, style_image_path, test_image_dir, test_image_path, batch_size):
         self.training_path = training_path
         self.style_image_path = style_image_path
         self.test_image_dir = test_image_dir
         self.test_image_path = test_image_path
         self.training_file_paths = self.get_jpg_paths(training_path)
 
-        self.style_image = np.expand_dims(self.get_image(style_image_path), axis=0)
+        style_images = []
+        for i in xrange(0, batch_size):
+            style_images.append(self.get_image(style_image_path))
+        self.style_image = np.array(style_images)
 
 
     # get all jpg files from a folder
