@@ -75,6 +75,7 @@ def run_training():
   # Get the sets of images for training, validation
   dataset = data_set(FLAGS.training_dir, FLAGS.style_image_path, FLAGS.test_image_dir, FLAGS.test_image_path, FLAGS.batch_size)
   style_shape = dataset.style_image.shape
+  print style_shape
 
   style_features = {}
   with tf.Graph().as_default(), tf.device('/cpu:0'), tf.Session() as sess:
@@ -89,36 +90,28 @@ def run_training():
           style_features[layer] = gram
   print np.sum(style_features['relu1_1'])
 
+
   with tf.Graph().as_default(), tf.Session() as sess:
       X_content = tf.placeholder(tf.float32, shape=(1,256,256,3), name="X_content")
-      X_pre = vgg_model.preprocess(X_content)
 
       # precompute content features
+      content_vgg_image = vgg_model.preprocess(X_content)
+      content_net = vgg_model.net(FLAGS.vgg_path, content_vgg_image)
       content_features = {}
-      content_net = vgg_model.net(FLAGS.vgg_path, X_pre)
       content_features[CONTENT_LAYER] = content_net[CONTENT_LAYER]
 
-      preds = residualnet.net(X_content / 255.0)
-      preds_pre = vgg_model.preprocess(preds)
-
-      net = vgg_model.net(FLAGS.vgg_path, preds_pre)
+      transferred_image = residualnet.net(X_content / 255.0)
+      transferred_image_vgg = vgg_model.preprocess(transferred_image)
+      net = vgg_model.net(FLAGS.vgg_path, transferred_image_vgg)
 
       content_loss = loss_function.content_loss(content_features[CONTENT_LAYER], net[CONTENT_LAYER])
 
       style_losses = []
       for style_layer in STYLE_LAYERS:
-          layer = net[style_layer]
-          bs, height, width, filters = map(lambda i: i.value, layer.get_shape())
-          size = height * width * filters
-          feats = tf.reshape(layer, (bs, height * width, filters))
-          feats_T = tf.transpose(feats, perm=[0, 2, 1])
-          grams = tf.matmul(feats_T, feats) / size
-          style_gram = style_features[style_layer]
-          style_losses.append(2 * tf.nn.l2_loss(grams - style_gram) / style_gram.size)
+          style_losses.append(loss_function.style_loss(style_features[style_layer], net[style_layer]))
+      style_loss =  functools.reduce(tf.add, style_losses) /1
 
-      style_loss = 100 * functools.reduce(tf.add, style_losses) /1
-
-      tv_loss = loss_function.tv_loss(preds)
+      tv_loss = loss_function.tv_loss(transferred_image)
 
       loss = content_loss + style_loss + tv_loss
       train_op = tf.train.AdamOptimizer(LEARNING_RATE).minimize(loss)
@@ -130,18 +123,13 @@ def run_training():
       for iteration in xrange(FLAGS.iterations):
           start_time = time.time()
 
-          # Fill a feed dictionary with the actual set of images
-          # feed_dict = fill_feed_dict(dataset, content_placeholder, style_placeholder, iteration, FLAGS.batch_size)
-          # feed_dict = fill_feed_dict(dataset, X_content, style_image, iteration, FLAGS.batch_size)
-
           feed_dict = {
               X_content: dataset.get_training_image(iteration, 1)
           }
+
           # Run one step of the model.
-
-
           image, loss_value, content_loss_value, style_loss_value, tv_loss_value\
-              = sess.run([preds, loss, content_loss, style_loss, tv_loss], feed_dict=feed_dict)
+              = sess.run([transferred_image, loss, content_loss, style_loss, tv_loss], feed_dict=feed_dict)
           sess.run(train_op, feed_dict=feed_dict)
 
           # save test image
@@ -164,7 +152,7 @@ def run_training():
               }
 
               image, loss_value, content_loss_value, style_loss_value, tv_loss_value \
-                  = sess.run([preds, loss, content_loss, style_loss, tv_loss], feed_dict=feed_dict)
+                  = sess.run([transferred_image, loss, content_loss, style_loss, tv_loss], feed_dict=feed_dict)
 
               # save test image
               image = image[0]
@@ -179,14 +167,13 @@ def main(_):
   tf.gfile.MakeDirs(FLAGS.log_dir)
   run_training()
 
-
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
 
   parser.add_argument(
       '--training_dir',
       type=str,
-      default='/home/ec2-user/train2014/',
+      default='./training_data/',
       help='Directory to put the input data.'
   )
 
@@ -200,7 +187,7 @@ if __name__ == '__main__':
   parser.add_argument(
       '--batch_size',
       type=int,
-      default=4,
+      default=1,
       help='Batch size.  Must divide evenly into the dataset sizes.'
   )
 

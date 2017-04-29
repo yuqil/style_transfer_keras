@@ -1,15 +1,15 @@
 import math
 import tensorflow as tf
-
+import functools
 
 CHANNELS = 3
 WIDTH = 256
 HEIGHT = 256
 
 # FIXED WEIGHT CANNOT CHANGE
-CONTENT_WEIGHT = 1.0
-STYLE_WEIGHT = 0.01
-TV_WEIGHT = 1
+CONTENT_WEIGHT = 7.5
+STYLE_WEIGHT = 100
+TV_WEIGHT = 200
 
 
 def content_loss(content_activation, transferred_activation):
@@ -20,8 +20,8 @@ def content_loss(content_activation, transferred_activation):
   Returns:
     loss: Loss tensor of type float.
   """
-  # return CONTENT_WEIGHT * tf.reduce_sum((content_activation - transferred_activation) ** 2) / (WIDTH * HEIGHT * CHANNELS)
-  return CONTENT_WEIGHT * (2 * tf.nn.l2_loss(content_activation - transferred_activation) /  (WIDTH * HEIGHT * CHANNELS))
+  return CONTENT_WEIGHT * (tf.nn.l2_loss(content_activation - transferred_activation) /  (WIDTH * HEIGHT * CHANNELS))
+
 
 def gram_matrix(activation):
   shape = activation.get_shape()
@@ -31,23 +31,12 @@ def gram_matrix(activation):
   return gram, shape[0].value
 
 
-
 def style_loss(style_activation, transferred_activation):
-  # gram_style, filters = gram_matrix(style_activation)
-  # gram_transferred, filters = gram_matrix(transferred_activation)
-  # return STYLE_WEIGHT * tf.reduce_sum((gram_style - gram_transferred) ** 2) / (filters ** 2)
-  bs, height, width, filters = map(lambda i: i.value, transferred_activation.get_shape())
-
-  size = height * width * filters
-  feats = tf.reshape(transferred_activation, (bs, height * width, filters))
-  feats_T = tf.transpose(feats, perm=[0, 2, 1])
-  grams = tf.matmul(feats_T, feats) / size
-
-  feats1 = tf.reshape(style_activation, (bs, height * width, filters))
-  feats_T1 = tf.transpose(feats, perm=[0, 2, 1])
-  grams1 = tf.matmul(feats_T1, feats1) / size
-  print grams.get_shape()
-  return (2 * tf.nn.l2_loss(grams - grams1) / (filters * filters))
+  gram_transferred, filters = gram_matrix(transferred_activation)
+  print style_activation.shape
+  print gram_transferred.get_shape()
+  size = style_activation.size
+  return STYLE_WEIGHT * tf.nn.l2_loss(gram_transferred - style_activation) / size
 
 
 def tv_loss(transferred_image):
@@ -55,5 +44,3 @@ def tv_loss(transferred_image):
   x_tv = tf.nn.l2_loss(transferred_image[:, :, 1:, :] - transferred_image[:, :, :HEIGHT - 1, :])
   loss = TV_WEIGHT * (x_tv + y_tv) / (CHANNELS * WIDTH * HEIGHT)
   return loss
-
-

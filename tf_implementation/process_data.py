@@ -10,8 +10,8 @@ class data_set:
         self.training_file_paths = self.get_jpg_paths(training_path)
 
         style_images = []
-        for i in xrange(0, batch_size):
-            style_images.append(self.get_image(style_image_path))
+        for i in xrange(0, 1):
+            style_images.append(self.get_style_image(style_image_path))
         self.style_image = np.array(style_images)
 
 
@@ -21,8 +21,16 @@ class data_set:
         return paths
 
     # get a numpy array of (256,256,3) from an image path
+    def get_style_image(self, filepath):
+        img = cv2.imread(filepath)
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        return img
+
+
+    # get a numpy array of (256,256,3) from an image path
     def get_image(self, filepath):
         img = cv2.imread(filepath)
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
         newimg = cv2.resize(img, (256,256), interpolation=cv2.INTER_CUBIC)
         return newimg
 
