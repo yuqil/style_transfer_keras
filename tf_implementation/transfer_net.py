@@ -28,8 +28,10 @@ def conv_layer(x, filter_size, out_channels, stride, relu=True, is_training=True
     W, b = conv_init_vars(x, filter_size, out_channels)
     stride_shape = [1, stride, stride, 1]
     print('before', x.get_shape())
+    # x = tf.nn.conv2d(x, W, strides=stride_shape, padding='SAME') + b
+
     x = batch_norm(
-            tf.nn.conv2d(x, W, strides=stride_shape, padding='SAME') + b,
+            tf.nn.conv2d(x, W, strides=stride_shape, padding='SAME'),
             is_training
         )
     print('end', x.get_shape())
@@ -107,9 +109,9 @@ def transfer_net(x_image, is_training=True):
     h_res4    = residual_block(h_res3, filter_size=3, is_training=is_training)
     h_res5    = residual_block(h_res4, filter_size=3, is_training=is_training)
     h_conv_t1 = tranpose_conv(h_res5, filter_size=3, out_channels=64, stride=2)
-    h_conv_t1 = tf.reshape(h_conv_t1, [-1, 128, 128, 64])
+    h_conv_t1 = tf.reshape(h_conv_t1, [1, 128, 128, 64])
     h_conv_t2 = tranpose_conv(h_conv_t1, filter_size=3, out_channels=32, stride=2)
-    h_conv_t2 = tf.reshape(h_conv_t2, [-1, 256, 256, 32])
+    h_conv_t2 = tf.reshape(h_conv_t2, [1, 256, 256, 32])
     h_conv4   = conv_layer(h_conv_t2, filter_size=9, out_channels=3, stride=1, is_training=is_training)
     output    = tf.nn.tanh(h_conv4) * 150 + 255./2
 
