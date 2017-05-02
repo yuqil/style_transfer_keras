@@ -46,3 +46,11 @@ class data_set:
 #
 # dataset = dataset('./training_data', './style_data/style.jpg', './test_data/', './test/data/baby.jpg')
 # dataset.style_image
+
+
+def test_gray_scale(filename):
+    img = cv2.imread(filename)
+    img -= 10
+    cv2.imwrite('temp.jpg', img)
+
+# test_gray_scale('/Users/yuqil/Desktop/deep/style_transfer/style_transfer_keras/tf_implementation/style_data/style.jpg')

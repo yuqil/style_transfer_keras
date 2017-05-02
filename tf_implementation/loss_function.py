@@ -1,13 +1,13 @@
 import math
 import tensorflow as tf
-import functools
+import numpy as np
 
 CHANNELS = 3
 WIDTH = 256
 HEIGHT = 256
 
 # FIXED WEIGHT CANNOT CHANGE
-CONTENT_WEIGHT = 7.5
+CONTENT_WEIGHT = 10
 STYLE_WEIGHT = 100
 TV_WEIGHT = 200
 
@@ -31,12 +31,20 @@ def gram_matrix(activation):
   return gram, shape[0].value
 
 
-def style_loss(style_activation, transferred_activation):
+def gram_matrix_ndarray(activation):
+  shape = activation.shape
+  phi = np.reshape(activation, [shape[0] * shape[1] * shape[2], shape[3]])
+  phi_t = np.transpose(phi)
+  gram = np.matmul(phi_t, phi) / (shape[1] * shape[2] * shape[3])
+  return gram
+
+
+def style_loss(style_activation, transferred_activation, weight = 1.0):
   gram_transferred, filters = gram_matrix(transferred_activation)
   print style_activation.shape
   print gram_transferred.get_shape()
   size = style_activation.size
-  return STYLE_WEIGHT * tf.nn.l2_loss(gram_transferred - style_activation) / size
+  return weight * STYLE_WEIGHT * tf.nn.l2_loss(gram_transferred - style_activation) / size
 
 
 def tv_loss(transferred_image):
